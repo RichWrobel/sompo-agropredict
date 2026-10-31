@@ -1,0 +1,38 @@
+%% Sompo AgroPredict - Arquitetura Integrada (Sprint 3)
+%% Renderiza em qualquer visualizador Mermaid (ex.: https://mermaid.live)
+flowchart TB
+    subgraph ENTRADA["📥 ENTRADA DE DADOS"]
+        E1["📱 API REST\nPOST /api/v1/predicoes"]
+        E2["📄 Arquivo CSV\nbackend/ingest_csv.py"]
+    end
+
+    subgraph BACKEND["⚙️ BACKEND (FastAPI) — backend/"]
+        S1["🔐 Autenticação + RBAC\nsecurity.py"]
+        V1["✅ Validação\nfaixas plausíveis, campos obrigatórios\nschemas.py"]
+        M1["🧠 model_service.py\nmodelo.pkl + regras de negócio"]
+        L1["📝 Log de auditoria\nlogging_config.py"]
+    end
+
+    subgraph PERSIST["🗄️ PERSISTÊNCIA — database.py"]
+        D1[("Oracle XE\n(produção)")]
+        D2[("SQLite\n(fallback local)")]
+    end
+
+    subgraph SAIDA["📤 SAÍDA"]
+        C1["📊 Dashboard Streamlit\nlogin por perfil"]
+        C2["📈 Consultas SQL\nsql/consultas.sql"]
+        C3["🚨 Alerta\n(classe ALTO)"]
+    end
+
+    E1 --> S1
+    E2 --> V1
+    S1 --> V1
+    V1 --> M1
+    M1 --> L1
+    M1 --> D1
+    M1 --> D2
+    M1 -- "classe = ALTO" --> C3
+    D1 --> C2
+    D1 --> C1
+    D2 --> C1
+    C1 -- "GET com API key" --> BACKEND
